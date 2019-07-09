@@ -4,7 +4,10 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -14,18 +17,27 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.view.View;
+import android.widget.ImageView;
 
 import com.dailystudio.app.activity.ActionBarFragmentActivity;
 import com.dailystudio.app.utils.ActivityLauncher;
 import com.dailystudio.app.utils.ArrayUtils;
+import com.dailystudio.app.utils.BitmapUtils;
+import com.dailystudio.deeplab.ml.DeeplabInterface;
 import com.dailystudio.deeplab.ml.DeeplabModel;
+import com.dailystudio.deeplab.ml.ImageUtils;
+import com.dailystudio.deeplab.utils.FilePickUtils;
 import com.dailystudio.development.Logger;
+
+import org.greenrobot.eventbus.EventBus;
 
 public class MainActivity extends ActionBarFragmentActivity {
 
     private final static int REQUEST_REQUIRED_PERMISSION = 0x01;
     private final static int REQUEST_PICK_IMAGE = 0x02;
+    private Uri mImageUri;
 
     private class InitializeModelAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -185,10 +197,67 @@ public class MainActivity extends ActionBarFragmentActivity {
     }
 
     private void segmentImage(Uri pickedImageUri) {
-        Fragment fragment = findFragment(R.id.fragment_segment_bitmaps);
+        mImageUri = pickedImageUri;
+       /* Fragment fragment = findFragment(R.id.fragment_segment_bitmaps);
         if (fragment instanceof SegmentBitmapsFragment) {
             ((SegmentBitmapsFragment)fragment).segmentBitmap(pickedImageUri);
+        }*/
+
+        DeeplabInterface deeplabInterface = DeeplabModel.getInstance();
+
+        final String filePath = FilePickUtils.getPath(getApplicationContext(), pickedImageUri);
+        Logger.debug("file to mask: %s", filePath);
+        if (TextUtils.isEmpty(filePath)) {
+            return;
         }
+
+
+
+        boolean vertical = checkAndReportDimen(filePath);
+        final Resources res =getResources();
+        final int dw = res.getDimensionPixelSize(
+                vertical ? R.dimen.image_width_v : R.dimen.image_width_h);
+        final int dh = res.getDimensionPixelSize(
+                vertical ? R.dimen.image_height_v : R.dimen.image_height_h);
+        Logger.debug("display image dimen: [%d x %d]", dw, dh);
+
+        Bitmap bitmap = decodeBitmapFromFile(filePath, dw, dh);
+        if (bitmap == null) {
+            return ;
+        }
+
+        ImageView src_img = (ImageView)findViewById(R.id.src_img);
+        src_img.setImageBitmap(bitmap);
+
+
+        final int w = bitmap.getWidth();
+        final int h = bitmap.getHeight();
+        Logger.debug("decoded file dimen: [%d x %d]", w, h);
+
+       // EventBus.getDefault().post(new ImageDimenEvent(mImageUri, w, h));
+
+        float resizeRatio = (float) deeplabInterface.getInputSize() / Math.max(bitmap.getWidth(), bitmap.getHeight());
+        int rw = Math.round(w * resizeRatio);
+        int rh = Math.round(h * resizeRatio);
+
+        Logger.debug("resize bitmap: ratio = %f, [%d x %d] -> [%d x %d]",
+                resizeRatio, w, h, rw, rh);
+
+        Bitmap resized = ImageUtils.tfResizeBilinear(bitmap, rw, rh);
+
+        Bitmap mask = deeplabInterface.segment(resized);
+
+        mask = BitmapUtils.createClippedBitmap(mask,
+                (mask.getWidth() - rw) / 2,
+                (mask.getHeight() - rh) / 2,
+                rw, rh);
+        mask = BitmapUtils.scaleBitmap(mask, w, h);
+
+        ImageView segment_img = (ImageView)findViewById(R.id.segment_img);
+
+
+
+        segment_img.setImageBitmap(mask);
     }
 
     private void initModel() {
@@ -203,6 +272,70 @@ public class MainActivity extends ActionBarFragmentActivity {
             mFabPickImage.setBackgroundTintList(
                     ColorStateList.valueOf(getColor(resId)));
         }
+    }
+
+
+    private boolean checkAndReportDimen(String filePath) {
+        if (TextUtils.isEmpty(filePath)) {
+            return false;
+        }
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(filePath, options);
+
+        final int width = options.outWidth;
+        final int height = options.outHeight;
+        Logger.debug("original image dimen: %d x %d", width, height);
+
+        EventBus.getDefault().post(new ImageDimenEvent(mImageUri, width, height));
+
+        return (height > width);
+    }
+
+
+    public static Bitmap decodeBitmapFromFile(String filePath,
+                                              int reqWidth,
+                                              int reqHeight) {
+        if (TextUtils.isEmpty(filePath)) {
+            return null;
+        }
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(filePath, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(filePath, options);
+    }
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) >= reqHeight
+                    && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
     }
 
 }

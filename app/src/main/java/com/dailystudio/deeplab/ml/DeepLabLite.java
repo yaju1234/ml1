@@ -68,10 +68,13 @@ public class DeepLabLite implements DeeplabInterface {
             if (i == 0) {
                 mSegmentColors[i] = Color.TRANSPARENT;
             } else {
-                mSegmentColors[i] = Color.rgb(
+
+                mSegmentColors[i] = Color.argb(100, 255, 105, 180);
+
+               /* mSegmentColors[i] = Color.rgb(
                         (int)(255 * RANDOM.nextFloat()),
                         (int)(255 * RANDOM.nextFloat()),
-                        (int)(255 * RANDOM.nextFloat()));
+                        (int)(255 * RANDOM.nextFloat()));*/
             }
         }
 
@@ -184,6 +187,17 @@ public class DeepLabLite implements DeeplabInterface {
                 maskBitmap.setPixel(x, y, mSegmentColors[mSegmentBits[x][y]]);
             }
         }
+
+
+
+       /* int[] pixels = new int[w * h];
+        for (int i = 0; i < w * h; i++)
+            if (mModelBuffer.getFloat()>0.5)
+                pixels[i]= Color.argb(100, 255, 105, 180);
+            else
+                pixels[i]= Color.argb(0, 0, 0, 0);
+
+        bitmap.setPixels(pixels, 0, w, 0, 0, w, h);*/
 
 
         return maskBitmap;
