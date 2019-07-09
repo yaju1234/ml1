@@ -289,7 +289,6 @@ public class MainActivity extends ActionBarFragmentActivity {
         final int height = options.outHeight;
         Logger.debug("original image dimen: %d x %d", width, height);
 
-        EventBus.getDefault().post(new ImageDimenEvent(mImageUri, width, height));
 
         return (height > width);
     }
