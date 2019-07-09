@@ -25,6 +25,7 @@ import java.util.Random;
 
 public class DeepLabLite implements DeeplabInterface {
 
+   // private final static String MODEL_PATH = "frozen_inference_graph.pb";
     private final static String MODEL_PATH = "deeplabv3_257_mv_gpu.tflite";
     private final static boolean USE_GPU = false;
 

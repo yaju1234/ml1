@@ -1,6 +1,8 @@
 package com.dailystudio.deeplab.ml;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.text.TextUtils;
@@ -17,11 +19,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 
 public class DeeplabMobile implements DeeplabInterface {
 
-    private final static String MODEL_FILE = "/sdcard/deeplab/frozen_inference_graph.pb";
+    private final static String MODEL_FILE = "file:///android_asset/frozen_inference_graph.pb";
 
     private final static String INPUT_NAME = "ImageTensor";
     private final static String OUTPUT_NAME = "SemanticPredictions";
@@ -33,40 +36,8 @@ public class DeeplabMobile implements DeeplabInterface {
     @Override
     public boolean initialize(Context context) {
 
-        final File graphPath = new File(MODEL_FILE);
-
-        FileInputStream graphStream;
-        try {
-            graphStream = new FileInputStream(graphPath);
-        } catch (FileNotFoundException e) {
-            Logger.error("create input stream from[%s] failed: %s",
-                    graphPath.getAbsoluteFile(),
-                    e.toString());
-
-            graphStream = null;
-        }
-
-        if (graphStream == null) {
-            return false;
-        }
-
-        sTFInterface = new TensorFlowInferenceInterface(graphStream);
-        if (sTFInterface == null) {
-            Logger.warn("initialize Tensorflow model[%s] failed.",
-                    MODEL_FILE);
-
-            return false;
-        }
-
-//        printGraph(sTFInterface.graph());
-//        printOp(sTFInterface.graph(), "ImageTensor");
-
-        if (graphStream != null) {
-            try {
-                graphStream.close();
-            } catch (IOException e) {
-            }
-        }
+        sTFInterface = new TensorFlowInferenceInterface(context.getAssets(),"file:///android_asset/frozen_inference_graph.pb");
+        //tensorflow.initializeTensorFlow(getAssets(), "file:///android_asset/model.pb");
 
         return true;
     }
@@ -132,7 +103,7 @@ public class DeeplabMobile implements DeeplabInterface {
 
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                output.setPixel(x, y, mOutputs[y * w + x] == 0 ? Color.TRANSPARENT : Color.BLACK);
+                output.setPixel(x, y, mOutputs[y * w + x] == 0 ? Color.TRANSPARENT : Color.argb(100,255,108,157));
             }
         }
 

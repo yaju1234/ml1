@@ -2,7 +2,7 @@ package com.dailystudio.deeplab.ml;
 
 public class DeeplabModel {
 
-    private final static Boolean USE_TF_LITE = true;
+    private final static Boolean USE_TF_LITE = false;
 
     private static DeeplabInterface sInterface = null;
 
