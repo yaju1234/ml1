@@ -13,7 +13,9 @@ public interface DeeplabInterface {
 
     int getInputSize();
 
-    Bitmap segment(Bitmap bitmap);
+    Bitmap[] segment(Bitmap bitmap);
+
+
 
 }
 

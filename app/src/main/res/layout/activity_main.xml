@@ -3,18 +3,21 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-
+    android:elevation="0dp"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
     <LinearLayout
+        android:layout_above="@+id/ll_footer"
         android:orientation="vertical"
         android:background="#ffffff"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="0dp">
+            android:layout_height="match_parent">
 
             <ImageView
                 android:id="@+id/src_img"
@@ -39,11 +42,26 @@
             android:id="@+id/cropped_img"
             android:scaleType="fitCenter"
             android:layout_weight="1"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="0dp" />
 
     </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_footer"
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_alignParentBottom="true"
+            android:gravity="center"
+            android:layout_height="100dp">
 
+            <ImageView
+                android:id="@+id/cut_it"
+                android:layout_width="60dp"
+                android:src="@drawable/app_icon"
+                android:layout_height="60dp" />
+        </LinearLayout>
+    </RelativeLayout>
   <!--  <fragment
         android:id="@+id/fragment_segment_bitmaps"
         android:name="com.dailystudio.deeplab.SegmentBitmapsFragment"

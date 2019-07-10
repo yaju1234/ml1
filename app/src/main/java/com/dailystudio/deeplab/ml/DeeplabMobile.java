@@ -54,7 +54,7 @@ public class DeeplabMobile implements DeeplabInterface {
     }
 
     @Override
-    public Bitmap segment(final Bitmap bitmap) {
+    public Bitmap[] segment(final Bitmap bitmap) {
         if (sTFInterface == null) {
             Logger.warn("tf model is NOT initialized.");
             return null;
@@ -100,14 +100,21 @@ public class DeeplabMobile implements DeeplabInterface {
 //        Logger.debug("outputs = %s", ArrayUtils.intArrayToString(mOutputs));
 
         Bitmap output = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Bitmap output1 = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+
 
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
+               // output.setPixel(x, y, mOutputs[y * w + x] == 0 ? Color.TRANSPARENT : Color.argb(100,255,108,157));
                 output.setPixel(x, y, mOutputs[y * w + x] == 0 ? Color.TRANSPARENT : Color.argb(100,255,108,157));
+                output1.setPixel(x, y, mOutputs[y * w + x] == 0 ? Color.TRANSPARENT : Color.BLACK);
+
             }
         }
-
-        return output;
+       Bitmap b[] =  new Bitmap[2];
+        b[0] = output;
+        b[1] = output1;
+        return b;
     }
 
     public static void printOp(Graph graph, String opName) {

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Deeplab Demo</string>
+    <string name="app_name">Cut-It</string>
 
     <string name="label_original">Original</string>
     <string name="label_mask">Mask</string>

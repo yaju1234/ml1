@@ -7,7 +7,11 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -17,6 +21,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
@@ -32,12 +37,14 @@ import com.dailystudio.deeplab.utils.FilePickUtils;
 import com.dailystudio.development.Logger;
 
 import org.greenrobot.eventbus.EventBus;
-
-public class MainActivity extends ActionBarFragmentActivity {
+///
+//final Bitmap cropped = cropBitmapWithMask(bitmap, mask);
+public class MainActivity extends AppCompatActivity {
 
     private final static int REQUEST_REQUIRED_PERMISSION = 0x01;
     private final static int REQUEST_PICK_IMAGE = 0x02;
     private Uri mImageUri;
+    private ImageView cut_it;
 
     private class InitializeModelAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -59,7 +66,17 @@ public class MainActivity extends ActionBarFragmentActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        getSupportActionBar().setElevation(0);
+        cut_it = (ImageView)findViewById(R.id.cut_it);
+        cut_it.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(Constant.croped!=null){
+                    startActivity(new Intent(getApplicationContext(), CutActivity.class));
+                }
 
+            }
+        });
         setupViews();
     }
 
@@ -245,19 +262,38 @@ public class MainActivity extends ActionBarFragmentActivity {
 
         Bitmap resized = ImageUtils.tfResizeBilinear(bitmap, rw, rh);
 
-        Bitmap mask = deeplabInterface.segment(resized);
+        Bitmap maskarr[] = deeplabInterface.segment(resized);
 
-        mask = BitmapUtils.createClippedBitmap(mask,
-                (mask.getWidth() - rw) / 2,
-                (mask.getHeight() - rh) / 2,
+
+
+
+
+
+
+
+
+       Bitmap mask = BitmapUtils.createClippedBitmap(maskarr[0],
+                (maskarr[0].getWidth() - rw) / 2,
+                (maskarr[0].getHeight() - rh) / 2,
                 rw, rh);
         mask = BitmapUtils.scaleBitmap(mask, w, h);
+
+
+
+        Bitmap mask1 = BitmapUtils.createClippedBitmap(maskarr[1],
+                (maskarr[1].getWidth() - rw) / 2,
+                (maskarr[1].getHeight() - rh) / 2,
+                rw, rh);
+        mask1 = BitmapUtils.scaleBitmap(mask1, w, h);
 
         ImageView segment_img = (ImageView)findViewById(R.id.segment_img);
 
 
 
         segment_img.setImageBitmap(mask);
+
+        Bitmap cropped = cropBitmapWithMask(bitmap, mask1);
+        Constant.croped = cropped;
     }
 
     private void initModel() {
@@ -335,6 +371,32 @@ public class MainActivity extends ActionBarFragmentActivity {
         }
 
         return inSampleSize;
+    }
+
+    private Bitmap cropBitmapWithMask(Bitmap original, Bitmap mask) {
+        if (original == null
+                || mask == null) {
+            return null;
+        }
+
+        final int w = original.getWidth();
+        final int h = original.getHeight();
+        if (w <= 0 || h <= 0) {
+            return null;
+        }
+
+        Bitmap cropped = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+
+
+        Canvas canvas = new Canvas(cropped);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        canvas.drawBitmap(original, 0, 0, null);
+        canvas.drawBitmap(mask, 0, 0, paint);
+        paint.setXfermode(null);
+
+        return cropped;
     }
 
 }

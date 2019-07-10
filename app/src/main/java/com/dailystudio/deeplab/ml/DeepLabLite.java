@@ -93,7 +93,7 @@ public class DeepLabLite implements DeeplabInterface {
     }
 
     @Override
-    public Bitmap segment(Bitmap bitmap) {
+    public Bitmap[] segment(Bitmap bitmap) {
         if (mModelBuffer == null) {
             Logger.warn("tf model is NOT initialized.");
             return null;
@@ -201,7 +201,8 @@ public class DeepLabLite implements DeeplabInterface {
         bitmap.setPixels(pixels, 0, w, 0, 0, w, h);*/
 
 
-        return maskBitmap;
+        //return maskBitmap;
+        return null;
     }
 
     private void fillZeroes(int[][] array) {
