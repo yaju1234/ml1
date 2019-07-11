@@ -1,1 +1,0 @@
-deeplabv3_mnv2_pascal_train_aug/frozen_inference_graph.pb

@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private final static int REQUEST_REQUIRED_PERMISSION = 0x01;
     private final static int REQUEST_PICK_IMAGE = 0x02;
     private Uri mImageUri;
-    private ImageView cut_it;
+    private ImageView fab_pick_image;
 
     private class InitializeModelAsyncTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -67,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         getSupportActionBar().setElevation(0);
-        cut_it = (ImageView)findViewById(R.id.cut_it);
-        cut_it.setOnClickListener(new View.OnClickListener() {
+        fab_pick_image = (ImageView)findViewById(R.id.fab_pick_image);
+        /*fab_pick_image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(Constant.croped!=null){
@@ -76,14 +76,13 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             }
-        });
+        });*/
         setupViews();
     }
 
     private void setupViews() {
-        mFabPickImage = findViewById(R.id.fab_pick_image);
-        if (mFabPickImage != null) {
-            mFabPickImage.setOnClickListener(new View.OnClickListener() {
+       if (fab_pick_image != null) {
+           fab_pick_image.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View v) {
@@ -215,85 +214,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void segmentImage(Uri pickedImageUri) {
         mImageUri = pickedImageUri;
-       /* Fragment fragment = findFragment(R.id.fragment_segment_bitmaps);
-        if (fragment instanceof SegmentBitmapsFragment) {
-            ((SegmentBitmapsFragment)fragment).segmentBitmap(pickedImageUri);
-        }*/
-
-        DeeplabInterface deeplabInterface = DeeplabModel.getInstance();
-
-        final String filePath = FilePickUtils.getPath(getApplicationContext(), pickedImageUri);
-        Logger.debug("file to mask: %s", filePath);
-        if (TextUtils.isEmpty(filePath)) {
-            return;
-        }
+        Constant.mImageUri = mImageUri;
+        startActivity(new Intent(getApplicationContext(),MaskActivity.class));
 
 
-
-        boolean vertical = checkAndReportDimen(filePath);
-        final Resources res =getResources();
-        final int dw = res.getDimensionPixelSize(
-                vertical ? R.dimen.image_width_v : R.dimen.image_width_h);
-        final int dh = res.getDimensionPixelSize(
-                vertical ? R.dimen.image_height_v : R.dimen.image_height_h);
-        Logger.debug("display image dimen: [%d x %d]", dw, dh);
-
-        Bitmap bitmap = decodeBitmapFromFile(filePath, dw, dh);
-        if (bitmap == null) {
-            return ;
-        }
-
-        ImageView src_img = (ImageView)findViewById(R.id.src_img);
-        src_img.setImageBitmap(bitmap);
-
-
-        final int w = bitmap.getWidth();
-        final int h = bitmap.getHeight();
-        Logger.debug("decoded file dimen: [%d x %d]", w, h);
-
-       // EventBus.getDefault().post(new ImageDimenEvent(mImageUri, w, h));
-
-        float resizeRatio = (float) deeplabInterface.getInputSize() / Math.max(bitmap.getWidth(), bitmap.getHeight());
-        int rw = Math.round(w * resizeRatio);
-        int rh = Math.round(h * resizeRatio);
-
-        Logger.debug("resize bitmap: ratio = %f, [%d x %d] -> [%d x %d]",
-                resizeRatio, w, h, rw, rh);
-
-        Bitmap resized = ImageUtils.tfResizeBilinear(bitmap, rw, rh);
-
-        Bitmap maskarr[] = deeplabInterface.segment(resized);
-
-
-
-
-
-
-
-
-
-       Bitmap mask = BitmapUtils.createClippedBitmap(maskarr[0],
-                (maskarr[0].getWidth() - rw) / 2,
-                (maskarr[0].getHeight() - rh) / 2,
-                rw, rh);
-        mask = BitmapUtils.scaleBitmap(mask, w, h);
-
-
-
-        Bitmap mask1 = BitmapUtils.createClippedBitmap(maskarr[1],
-                (maskarr[1].getWidth() - rw) / 2,
-                (maskarr[1].getHeight() - rh) / 2,
-                rw, rh);
-        mask1 = BitmapUtils.scaleBitmap(mask1, w, h);
-
-        ImageView segment_img = (ImageView)findViewById(R.id.segment_img);
-
-
-
-        segment_img.setImageBitmap(mask);
-
-        Bitmap cropped = cropBitmapWithMask(bitmap, mask1);
-        Constant.croped = cropped;
     }
 
     private void initModel() {

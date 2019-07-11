@@ -201,7 +201,7 @@ public class DeepLabLite implements DeeplabInterface {
         bitmap.setPixels(pixels, 0, w, 0, 0, w, h);*/
 
 
-        //return maskBitmap;
+        //return11 maskBitmap;
         return null;
     }
 
