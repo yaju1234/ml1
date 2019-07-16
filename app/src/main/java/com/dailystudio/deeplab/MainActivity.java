@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private FloatingActionButton mFabPickImage;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         getSupportActionBar().setElevation(0);
+        getSupportActionBar().hide();
         fab_pick_image = (ImageView)findViewById(R.id.fab_pick_image);
         /*fab_pick_image.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -127,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
     private void syncUIWithPermissions(boolean requestIfNeed) {
         final boolean granted = checkRequiredPermissions(requestIfNeed);
 
-        setPickImageEnabled(granted);
+
         if (granted && !DeeplabModel.getInstance().isInitialized()) {
             initModel();
         }
@@ -174,11 +175,7 @@ public class MainActivity extends AppCompatActivity {
                 Logger.debug("permission granted, initialize model.");
                 initModel();
 
-                if (mFabPickImage != null) {
-                    mFabPickImage.setEnabled(true);
-                    mFabPickImage.setBackgroundTintList(
-                            ColorStateList.valueOf(getColor(R.color.colorAccent)));
-                }
+
             } else {
                 Logger.debug("permission denied, disable fab.");
             }
@@ -215,7 +212,9 @@ public class MainActivity extends AppCompatActivity {
     private void segmentImage(Uri pickedImageUri) {
         mImageUri = pickedImageUri;
         Constant.mImageUri = mImageUri;
-        startActivity(new Intent(getApplicationContext(),MaskActivity.class));
+        new LoadAsynctask().execute();
+
+
 
 
     }
@@ -224,16 +223,26 @@ public class MainActivity extends AppCompatActivity {
         new InitializeModelAsyncTask().execute((Void)null);
     }
 
-    private void setPickImageEnabled(boolean enabled) {
-        if (mFabPickImage != null) {
-            mFabPickImage.setEnabled(enabled);
 
-            int resId = enabled ? R.color.colorAccent : R.color.light_gray;
-            mFabPickImage.setBackgroundTintList(
-                    ColorStateList.valueOf(getColor(resId)));
+    class LoadAsynctask extends AsyncTask<Void,Void,Void>{
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            startActivity(new Intent(getApplicationContext(),MaskActivity.class));
         }
     }
-
 
     private boolean checkAndReportDimen(String filePath) {
         if (TextUtils.isEmpty(filePath)) {

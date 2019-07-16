@@ -37,9 +37,11 @@ import com.dailystudio.development.Logger;
 
 ///
 //final Bitmap cropped = cropBitmapWithMask(bitmap, mask);
-public class MaskActivity extends AppCompatActivity {
+public class MaskActivity extends BaseActivity {
 
- private LinearLayout ll_cut_it;
+ private LinearLayout ll_cut_it,ll_back;
+ private ImageView src_img,segment_img;
+ private Bitmap mask,bitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,13 +63,46 @@ public class MaskActivity extends AppCompatActivity {
         decorView.setSystemUiVisibility(systemUiVisibilityFlags);
 
         ll_cut_it = (LinearLayout)findViewById(R.id.ll_cut_it);
+        ll_back = (LinearLayout)findViewById(R.id.ll_back);
+        src_img = (ImageView)findViewById(R.id.src_img);
+         segment_img = (ImageView)findViewById(R.id.segment_img);
         ll_cut_it.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(getApplicationContext(), CutActivity.class));
             }
         });
-        setupViews();
+        ll_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
+
+        new MyAsynctask().execute();
+
+    }
+    class MyAsynctask extends  AsyncTask<Void,Void,Void>{
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            showDialog();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            setupViews();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            src_img.setImageBitmap(bitmap);
+            segment_img.setImageBitmap(mask);
+            dismissDialog();
+        }
     }
 
     private void setupViews() {
@@ -89,13 +124,13 @@ public class MaskActivity extends AppCompatActivity {
                 vertical ? R.dimen.image_height_v : R.dimen.image_height_h);
         Logger.debug("display image dimen: [%d x %d]", dw, dh);
 
-        Bitmap bitmap = decodeBitmapFromFile(filePath, dw, dh);
+         bitmap = decodeBitmapFromFile(filePath, dw, dh);
         if (bitmap == null) {
             return ;
         }
 
-        ImageView src_img = (ImageView)findViewById(R.id.src_img);
-        src_img.setImageBitmap(bitmap);
+
+      /*  src_img.setImageBitmap(bitmap);*/
 
 
         final int w = bitmap.getWidth();
@@ -123,7 +158,7 @@ public class MaskActivity extends AppCompatActivity {
 
 
 
-        Bitmap mask = BitmapUtils.createClippedBitmap(maskarr[0],
+         mask = BitmapUtils.createClippedBitmap(maskarr[0],
                 (maskarr[0].getWidth() - rw) / 2,
                 (maskarr[0].getHeight() - rh) / 2,
                 rw, rh);
@@ -137,11 +172,10 @@ public class MaskActivity extends AppCompatActivity {
                 rw, rh);
         mask1 = BitmapUtils.scaleBitmap(mask1, w, h);
 
-        ImageView segment_img = (ImageView)findViewById(R.id.segment_img);
 
 
 
-        segment_img.setImageBitmap(mask);
+       /* segment_img.setImageBitmap(mask);*/
 
         Bitmap cropped = cropBitmapWithMask(bitmap, mask1);
         Constant.croped = cropped;
