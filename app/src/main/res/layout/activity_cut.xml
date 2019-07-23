@@ -11,7 +11,7 @@
         android:background="@drawable/t_bg"
         android:orientation="vertical">
 
-        <ImageView
+        <RelativeLayout
             android:id="@+id/cut_img"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
